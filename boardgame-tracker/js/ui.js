@@ -9,6 +9,11 @@ class UI {
 
     // 设置事件监听器
     setupEventListeners() {
+        // 监听新对局按钮点击
+        document.getElementById('add-game-btn')?.addEventListener('click', () => {
+            this.showModal('add-game-modal');
+        });
+
         // 监听第一局按钮点击
         document.getElementById('first-game-btn')?.addEventListener('click', () => {
             this.showModal('add-game-modal');
@@ -24,7 +29,7 @@ class UI {
                 // 添加当前按钮的选中状态
                 e.currentTarget.classList.add('selected');
                 // 设置隐藏输入框的值
-                document.getElementById('winner-input').value = e.currentTarget.dataset.player;
+                document.getElementById('winner-input').value = e.currentTarget.dataset.winner;
             });
         });
 
@@ -33,6 +38,13 @@ class UI {
             const input = document.getElementById('new-game-input');
             const select = document.getElementById('game-select');
             if (input.value.trim()) {
+                // 获取当前设置
+                const settings = JSON.parse(localStorage.getItem('boardgame-tracker-settings') || '{"games":[]}');
+                // 添加新游戏到设置中
+                if (!settings.games.includes(input.value.trim())) {
+                    settings.games.push(input.value.trim());
+                    localStorage.setItem('boardgame-tracker-settings', JSON.stringify(settings));
+                }
                 // 创建新的选项
                 const option = document.createElement('option');
                 option.value = input.value.trim();
@@ -42,25 +54,64 @@ class UI {
                 select.value = input.value.trim();
                 // 清空输入框
                 input.value = '';
+                // 更新游戏选择列表
+                this.updateGameSelect();
             }
         });
 
         // 监听设置页面的游戏添加按钮
         document.getElementById('add-game-to-list')?.addEventListener('click', () => {
             const input = document.getElementById('new-game-name');
-            if (input.value.trim()) {
-                const gamesList = document.getElementById('games-list-settings');
-                const gameItem = document.createElement('div');
-                gameItem.className = 'game-setting-item';
-                gameItem.innerHTML = `
-                    <span>${input.value.trim()}</span>
-                    <button class="icon-btn remove-game" data-game="${input.value.trim()}">
-                        <i class="bi bi-x"></i>
-                    </button>
-                `;
-                gamesList.appendChild(gameItem);
+            const gameName = input.value.trim();
+            if (gameName) {
+                // 获取当前设置
+                const settings = JSON.parse(localStorage.getItem('boardgame-tracker-settings') || '{"games":[]}');
+                // 检查游戏是否已存在
+                if (!settings.games.includes(gameName)) {
+                    settings.games.push(gameName);
+                    localStorage.setItem('boardgame-tracker-settings', JSON.stringify(settings));
+                    
+                    // 更新游戏列表显示
+                    const gamesList = document.getElementById('games-list-settings');
+                    const gameItem = document.createElement('div');
+                    gameItem.className = 'game-setting-item';
+                    gameItem.innerHTML = `
+                        <span>${gameName}</span>
+                        <button class="icon-btn remove-game" data-game="${gameName}">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    `;
+                    gamesList.appendChild(gameItem);
+                    
+                    // 添加删除按钮事件监听
+                    const removeBtn = gameItem.querySelector('.remove-game');
+                    removeBtn.addEventListener('click', (e) => {
+                        const game = e.currentTarget.dataset.game;
+                        const updatedGames = settings.games.filter(g => g !== game);
+                        settings.games = updatedGames;
+                        localStorage.setItem('boardgame-tracker-settings', JSON.stringify(settings));
+                        gameItem.remove();
+                        this.updateGameSelect();
+                    });
+                    
+                    // 更新选择列表
+                    this.updateGameSelect();
+                }
+                // 清空输入框
                 input.value = '';
             }
+        });
+
+        // 监听模态框关闭按钮
+        document.querySelectorAll('.close-btn, .cancel-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.hideAllModals());
+        });
+
+        // 监听导航按钮
+        this.navButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.showPage(e.currentTarget.dataset.page);
+            });
         });
     }
 
