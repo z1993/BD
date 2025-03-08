@@ -19,6 +19,23 @@ class UI {
             this.showModal('add-game-modal');
         });
 
+        // 监听显示添加新游戏模态框按钮
+        document.getElementById('show-add-game-modal-btn')?.addEventListener('click', () => {
+            this.hideAllModals();
+            this.showModal('add-new-game-modal');
+        });
+
+        // 监听添加新游戏表单提交
+        document.getElementById('add-new-game-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const gameName = document.getElementById('new-game-name').value.trim();
+            if (gameName) {
+                this.addNewGame(gameName);
+                this.hideAllModals();
+                this.showModal('add-game-modal');
+            }
+        });
+
         // 监听胜者选择按钮
         document.querySelectorAll('.winner-selection .player-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -33,71 +50,12 @@ class UI {
             });
         });
 
-        // 监听新游戏添加按钮
-        document.getElementById('add-new-game-btn')?.addEventListener('click', () => {
-            const input = document.getElementById('new-game-input');
-            const select = document.getElementById('game-select');
-            if (input.value.trim()) {
-                // 获取当前设置
-                const settings = JSON.parse(localStorage.getItem('boardgame-tracker-settings') || '{"games":[]}');
-                // 添加新游戏到设置中
-                if (!settings.games.includes(input.value.trim())) {
-                    settings.games.push(input.value.trim());
-                    localStorage.setItem('boardgame-tracker-settings', JSON.stringify(settings));
-                }
-                // 创建新的选项
-                const option = document.createElement('option');
-                option.value = input.value.trim();
-                option.textContent = input.value.trim();
-                select.appendChild(option);
-                // 选中新添加的游戏
-                select.value = input.value.trim();
-                // 清空输入框
-                input.value = '';
-                // 更新游戏选择列表
-                this.updateGameSelect();
-            }
-        });
-
         // 监听设置页面的游戏添加按钮
         document.getElementById('add-game-to-list')?.addEventListener('click', () => {
             const input = document.getElementById('new-game-name');
             const gameName = input.value.trim();
             if (gameName) {
-                // 获取当前设置
-                const settings = JSON.parse(localStorage.getItem('boardgame-tracker-settings') || '{"games":[]}');
-                // 检查游戏是否已存在
-                if (!settings.games.includes(gameName)) {
-                    settings.games.push(gameName);
-                    localStorage.setItem('boardgame-tracker-settings', JSON.stringify(settings));
-                    
-                    // 更新游戏列表显示
-                    const gamesList = document.getElementById('games-list-settings');
-                    const gameItem = document.createElement('div');
-                    gameItem.className = 'game-setting-item';
-                    gameItem.innerHTML = `
-                        <span>${gameName}</span>
-                        <button class="icon-btn remove-game" data-game="${gameName}">
-                            <i class="bi bi-x"></i>
-                        </button>
-                    `;
-                    gamesList.appendChild(gameItem);
-                    
-                    // 添加删除按钮事件监听
-                    const removeBtn = gameItem.querySelector('.remove-game');
-                    removeBtn.addEventListener('click', (e) => {
-                        const game = e.currentTarget.dataset.game;
-                        const updatedGames = settings.games.filter(g => g !== game);
-                        settings.games = updatedGames;
-                        localStorage.setItem('boardgame-tracker-settings', JSON.stringify(settings));
-                        gameItem.remove();
-                        this.updateGameSelect();
-                    });
-                    
-                    // 更新选择列表
-                    this.updateGameSelect();
-                }
-                // 清空输入框
+                this.addNewGame(gameName);
                 input.value = '';
             }
         });
@@ -115,15 +73,51 @@ class UI {
         });
     }
 
-    // 初始化UI
-    initializeUI() {
-        // 设置默认日期时间
-        const now = new Date();
-        const dateTimeLocal = now.toISOString().slice(0, 16);
-        document.getElementById('game-date').value = dateTimeLocal;
-
-        // 更新游戏选择列表
-        this.updateGameSelect();
+    // 添加新游戏
+    addNewGame(gameName) {
+        // 获取当前设置
+        const settings = JSON.parse(localStorage.getItem('boardgame-tracker-settings') || '{"games":[]}');
+        
+        // 检查游戏是否已存在
+        if (!settings.games.includes(gameName)) {
+            // 添加新游戏到设置中
+            settings.games.push(gameName);
+            localStorage.setItem('boardgame-tracker-settings', JSON.stringify(settings));
+            
+            // 更新游戏列表显示
+            const gamesList = document.getElementById('games-list-settings');
+            if (gamesList) {
+                const gameItem = document.createElement('div');
+                gameItem.className = 'game-setting-item';
+                gameItem.innerHTML = `
+                    <span>${gameName}</span>
+                    <button class="icon-btn remove-game" data-game="${gameName}">
+                        <i class="bi bi-x"></i>
+                    </button>
+                `;
+                gamesList.appendChild(gameItem);
+                
+                // 添加删除按钮事件监听
+                const removeBtn = gameItem.querySelector('.remove-game');
+                removeBtn.addEventListener('click', (e) => {
+                    const game = e.currentTarget.dataset.game;
+                    const updatedGames = settings.games.filter(g => g !== game);
+                    settings.games = updatedGames;
+                    localStorage.setItem('boardgame-tracker-settings', JSON.stringify(settings));
+                    gameItem.remove();
+                    this.updateGameSelect();
+                });
+            }
+            
+            // 更新选择列表
+            this.updateGameSelect();
+            
+            // 如果是从新游戏模态框添加的，自动选中新添加的游戏
+            const gameSelect = document.getElementById('game-select');
+            if (gameSelect) {
+                gameSelect.value = gameName;
+            }
+        }
     }
 
     // 更新游戏选择列表
@@ -133,7 +127,7 @@ class UI {
         const gameBetSelect = document.getElementById('game-for-bet');
         
         if (gameSelect) {
-            gameSelect.innerHTML = '<option value="">选择游戏</option>';
+            gameSelect.innerHTML = '<option value="">请选择游戏</option>';
             settings.games.forEach(game => {
                 const option = document.createElement('option');
                 option.value = game;
@@ -151,6 +145,17 @@ class UI {
                 gameBetSelect.appendChild(option);
             });
         }
+    }
+
+    // 初始化UI
+    initializeUI() {
+        // 设置默认日期时间
+        const now = new Date();
+        const dateTimeLocal = now.toISOString().slice(0, 16);
+        document.getElementById('game-date').value = dateTimeLocal;
+
+        // 更新游戏选择列表
+        this.updateGameSelect();
     }
 
     // 显示指定页面

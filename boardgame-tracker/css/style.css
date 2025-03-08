@@ -204,10 +204,15 @@ header h1 {
     z-index: 1000;
     align-items: center;
     justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
 .modal.active {
     display: flex;
+    opacity: 1;
+    visibility: visible;
 }
 
 .modal-content {
@@ -217,6 +222,12 @@ header h1 {
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+
+.modal.active .modal-content {
+    transform: translateY(0);
 }
 
 .modal-header {
@@ -234,6 +245,7 @@ header h1 {
 /* 表单样式 */
 .form-group {
     margin-bottom: 1rem;
+    position: relative;
 }
 
 .form-group label {
@@ -470,6 +482,8 @@ header h1 {
     background: none;
     cursor: pointer;
     transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
 }
 
 .player-btn.selected {
@@ -478,10 +492,81 @@ header h1 {
     border-color: var(--primary-color);
 }
 
+.player-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--primary-color);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.player-btn.selected::before {
+    opacity: 0.1;
+}
+
+.winner-selection .player-btn.selected {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
 .page.active {
     animation: fadeIn 0.3s ease-in-out;
 }
 
 .modal.active {
     animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 游戏选择样式 */
+#show-add-game-modal-btn {
+    margin-top: 0.5rem;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.game-setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background-color: var(--background-color);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.game-setting-item span {
+    flex: 1;
+}
+
+.game-setting-item .remove-game {
+    color: var(--danger-color);
+}
+
+.game-setting-item .remove-game:hover {
+    color: #dc3545;
+}
+
+/* 表单验证样式 */
+.form-group select:invalid,
+.form-group input:invalid {
+    border-color: var(--danger-color);
+}
+
+.form-group select:valid,
+.form-group input:valid {
+    border-color: var(--success-color);
+}
+
+/* 按钮状态样式 */
+.secondary-btn:disabled,
+.primary-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 } 

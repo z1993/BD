@@ -188,14 +188,14 @@
                 <div class="modal-body">
                     <form id="add-game-form">
                         <div class="form-group">
-                            <label for="game-select">游戏名称</label>
+                            <label for="game-select">选择游戏</label>
                             <select id="game-select" required>
+                                <option value="">请选择游戏</option>
                                 <!-- 游戏选项将通过JavaScript动态添加 -->
                             </select>
-                            <div class="add-new-game">
-                                <input type="text" id="new-game-input" placeholder="或输入新游戏名称">
-                                <button type="button" id="add-new-game-btn" class="secondary-btn">添加</button>
-                            </div>
+                            <button type="button" id="show-add-game-modal-btn" class="secondary-btn">
+                                <i class="bi bi-plus"></i> 添加新游戏
+                            </button>
                         </div>
                         
                         <div class="form-group">
@@ -232,6 +232,28 @@
                         <div class="form-actions">
                             <button type="button" class="secondary-btn cancel-btn">取消</button>
                             <button type="submit" class="primary-btn">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模态框 - 添加新游戏 -->
+        <div class="modal" id="add-new-game-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>添加新游戏</h3>
+                    <button class="close-btn"><i class="bi bi-x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-new-game-form">
+                        <div class="form-group">
+                            <label for="new-game-name">游戏名称</label>
+                            <input type="text" id="new-game-name" required placeholder="输入游戏名称">
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="secondary-btn cancel-btn">取消</button>
+                            <button type="submit" class="primary-btn">添加</button>
                         </div>
                     </form>
                 </div>
