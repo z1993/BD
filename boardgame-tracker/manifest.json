@@ -2,18 +2,18 @@
     "name": "桌游对决记录",
     "short_name": "桌游记录",
     "description": "记录与朋友之间的桌游对决结果和赌注",
-    "start_url": "/",
+    "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#F8F9FA",
     "theme_color": "#4A90E2",
     "icons": [
         {
-            "src": "img/icon-192.png",
+            "src": "./img/icon-192.png",
             "sizes": "192x192",
             "type": "image/png"
         },
         {
-            "src": "img/icon-512.png",
+            "src": "./img/icon-512.png",
             "sizes": "512x512",
             "type": "image/png"
         }

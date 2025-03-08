@@ -1,14 +1,14 @@
 const CACHE_NAME = 'boardgame-tracker-v1';
 const ASSETS_TO_CACHE = [
-    '/',
-    '/index.html',
-    '/css/style.css',
-    '/js/app.js',
-    '/js/ui.js',
-    '/js/data.js',
-    '/manifest.json',
-    '/img/icon-192.png',
-    '/img/icon-512.png',
+    './',
+    './index.html',
+    './css/style.css',
+    './js/app.js',
+    './js/ui.js',
+    './js/data.js',
+    './manifest.json',
+    './img/icon-192.png',
+    './img/icon-512.png',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css'
 ];
 
