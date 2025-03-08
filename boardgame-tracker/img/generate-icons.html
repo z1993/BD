@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>生成图标</title>
+    <style>
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="icon192" width="192" height="192"></canvas>
+    <canvas id="icon512" width="512" height="512"></canvas>
+    <br>
+    <button onclick="downloadIcons()">下载图标</button>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // 绘制背景
+            ctx.fillStyle = '#4A90E2';
+            ctx.fillRect(0, 0, size, size);
+            
+            // 绘制文字
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // 设置字体大小
+            const fontSize = size * 0.2;
+            ctx.font = `bold ${fontSize}px Arial`;
+            
+            // 绘制文字
+            ctx.fillText('桌游', size/2, size/2 - fontSize/2);
+            ctx.fillText('记录', size/2, size/2 + fontSize/2);
+        }
+
+        function downloadIcons() {
+            // 下载192x192图标
+            const link192 = document.createElement('a');
+            link192.download = 'icon-192.png';
+            link192.href = document.getElementById('icon192').toDataURL();
+            link192.click();
+
+            // 下载512x512图标
+            const link512 = document.createElement('a');
+            link512.download = 'icon-512.png';
+            link512.href = document.getElementById('icon512').toDataURL();
+            link512.click();
+        }
+
+        // 初始化绘制
+        drawIcon(document.getElementById('icon192'), 192);
+        drawIcon(document.getElementById('icon512'), 512);
+    </script>
+</body>
+</html> 
