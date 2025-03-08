@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桌游对决记录</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4A90E2">
+    <!-- 引入字体图标 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>桌游对决记录</h1>
+            <div class="user-info">
+                <span id="player-names">玩家: 我 & 她</span>
+                <button id="settings-btn" class="icon-btn"><i class="bi bi-gear"></i></button>
+            </div>
+        </header>
+
+        <nav class="main-nav">
+            <button class="nav-btn active" data-page="games">
+                <i class="bi bi-controller"></i>
+                <span>对局</span>
+            </button>
+            <button class="nav-btn" data-page="bets">
+                <i class="bi bi-trophy"></i>
+                <span>赌注</span>
+            </button>
+            <button class="nav-btn" data-page="stats">
+                <i class="bi bi-bar-chart"></i>
+                <span>统计</span>
+            </button>
+            <button class="nav-btn" data-page="settings">
+                <i class="bi bi-gear"></i>
+                <span>设置</span>
+            </button>
+        </nav>
+
+        <main id="main-content">
+            <!-- 对局页面 -->
+            <section id="games-page" class="page active">
+                <div class="page-header">
+                    <h2>对局记录</h2>
+                    <button id="add-game-btn" class="primary-btn">
+                        <i class="bi bi-plus"></i> 新对局
+                    </button>
+                </div>
+                
+                <div class="games-list" id="games-list">
+                    <!-- 游戏记录将通过JavaScript动态添加 -->
+                    <div class="empty-state">
+                        <i class="bi bi-controller"></i>
+                        <p>还没有对局记录</p>
+                        <button class="primary-btn" id="first-game-btn">记录第一局</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 赌注页面 -->
+            <section id="bets-page" class="page">
+                <div class="page-header">
+                    <h2>赌注管理</h2>
+                    <button id="add-bet-btn" class="primary-btn">
+                        <i class="bi bi-plus"></i> 新赌注
+                    </button>
+                </div>
+                
+                <div class="bets-container">
+                    <div class="bets-filter">
+                        <button class="filter-btn active" data-filter="active">进行中</button>
+                        <button class="filter-btn" data-filter="completed">已完成</button>
+                        <button class="filter-btn" data-filter="all">全部</button>
+                    </div>
+                    
+                    <div class="bets-list" id="bets-list">
+                        <!-- 赌注将通过JavaScript动态添加 -->
+                        <div class="empty-state">
+                            <i class="bi bi-trophy"></i>
+                            <p>还没有赌注记录</p>
+                            <button class="primary-btn" id="first-bet-btn">创建第一个赌注</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 统计页面 -->
+            <section id="stats-page" class="page">
+                <div class="page-header">
+                    <h2>数据统计</h2>
+                    <div class="stats-filter">
+                        <select id="stats-period">
+                            <option value="all">全部时间</option>
+                            <option value="month">本月</option>
+                            <option value="week">本周</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="stats-container">
+                    <div class="stats-card">
+                        <h3>总体胜率</h3>
+                        <div class="player-stats-container" id="win-rate-stats">
+                            <!-- 胜率统计将通过JavaScript动态添加 -->
+                        </div>
+                    </div>
+                    
+                    <div class="stats-card">
+                        <h3>游戏分布</h3>
+                        <div class="chart-container" id="games-distribution">
+                            <!-- 游戏分布图表将通过JavaScript动态添加 -->
+                        </div>
+                    </div>
+                    
+                    <div class="stats-card">
+                        <h3>赌注成功率</h3>
+                        <div class="player-stats-container" id="bet-success-rate">
+                            <!-- 赌注成功率将通过JavaScript动态添加 -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 设置页面 -->
+            <section id="settings-page" class="page">
+                <div class="page-header">
+                    <h2>设置</h2>
+                </div>
+                
+                <div class="settings-container">
+                    <div class="settings-group">
+                        <h3>玩家设置</h3>
+                        <div class="settings-item">
+                            <label for="player1-name">玩家1名称</label>
+                            <input type="text" id="player1-name" placeholder="输入玩家1名称">
+                        </div>
+                        <div class="settings-item">
+                            <label for="player2-name">玩家2名称</label>
+                            <input type="text" id="player2-name" placeholder="输入玩家2名称">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>游戏管理</h3>
+                        <div class="settings-item">
+                            <label>常玩游戏</label>
+                            <div id="games-list-settings">
+                                <!-- 游戏列表将通过JavaScript动态添加 -->
+                            </div>
+                            <div class="add-game-form">
+                                <input type="text" id="new-game-name" placeholder="输入游戏名称">
+                                <button id="add-game-to-list" class="secondary-btn">添加</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3>数据管理</h3>
+                        <div class="settings-item">
+                            <button id="export-data" class="secondary-btn">导出数据</button>
+                            <button id="import-data" class="secondary-btn">导入数据</button>
+                        </div>
+                        <div class="settings-item">
+                            <button id="clear-data" class="danger-btn">清除所有数据</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 模态框 - 添加对局 -->
+        <div class="modal" id="add-game-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>记录新对局</h3>
+                    <button class="close-btn"><i class="bi bi-x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-game-form">
+                        <div class="form-group">
+                            <label for="game-select">游戏名称</label>
+                            <select id="game-select" required>
+                                <!-- 游戏选项将通过JavaScript动态添加 -->
+                            </select>
+                            <div class="add-new-game">
+                                <input type="text" id="new-game-input" placeholder="或输入新游戏名称">
+                                <button type="button" id="add-new-game-btn" class="secondary-btn">添加</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>胜者</label>
+                            <div class="winner-selection">
+                                <button type="button" class="player-btn" data-player="player1">
+                                    <span class="player-name">玩家1</span>
+                                </button>
+                                <button type="button" class="player-btn" data-player="player2">
+                                    <span class="player-name">玩家2</span>
+                                </button>
+                            </div>
+                            <input type="hidden" id="winner-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="game-date">日期和时间</label>
+                            <input type="datetime-local" id="game-date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="game-notes">备注 (可选)</label>
+                            <textarea id="game-notes" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>关联赌注 (可选)</label>
+                            <select id="bet-select">
+                                <option value="">不关联赌注</option>
+                                <!-- 赌注选项将通过JavaScript动态添加 -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="secondary-btn cancel-btn">取消</button>
+                            <button type="submit" class="primary-btn">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 模态框 - 添加赌注 -->
+        <div class="modal" id="add-bet-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>创建新赌注</h3>
+                    <button class="close-btn"><i class="bi bi-x"></i></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-bet-form">
+                        <div class="form-group">
+                            <label for="bet-type">赌注类型</label>
+                            <select id="bet-type" required>
+                                <option value="single">单局赌注</option>
+                                <option value="series">连续赌注</option>
+                                <option value="score">计分赌注</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bet-content">赌注内容</label>
+                            <textarea id="bet-content" rows="2" required placeholder="例如：输家洗碗一周"></textarea>
+                        </div>
+                        
+                        <div class="form-group bet-condition-group" id="single-bet-condition">
+                            <label for="game-for-bet">关联游戏</label>
+                            <select id="game-for-bet">
+                                <option value="">选择游戏 (可选)</option>
+                                <!-- 游戏选项将通过JavaScript动态添加 -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group bet-condition-group" id="series-bet-condition" style="display: none;">
+                            <label for="series-count">胜利局数</label>
+                            <div class="number-input">
+                                <button type="button" class="decrement">-</button>
+                                <input type="number" id="series-count" min="2" value="3">
+                                <button type="button" class="increment">+</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group bet-condition-group" id="score-bet-condition" style="display: none;">
+                            <label for="score-deadline">截止日期</label>
+                            <input type="date" id="score-deadline">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="secondary-btn cancel-btn">取消</button>
+                            <button type="submit" class="primary-btn">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/data.js"></script>
+</body>
+</html> 
