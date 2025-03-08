@@ -1,222 +1,196 @@
-// 应用程序主类
-class BoardGameTracker {
+// 主应用程序类
+class App {
     constructor() {
         this.ui = new UI();
-        this.data = new DataManager();
-        this.currentPage = 'games';
+        this.setupEventListeners();
         this.initializeApp();
     }
 
-    // 初始化应用程序
+    // 初始化应用
     initializeApp() {
-        // 加载保存的数据
-        this.data.loadData();
-        
         // 初始化UI
         this.ui.initializeUI();
         
-        // 设置事件监听器
-        this.setupEventListeners();
+        // 加载设置
+        const settings = JSON.parse(localStorage.getItem('boardgame-tracker-settings') || '{"games":[]}');
+        this.ui.renderSettings(settings);
         
-        // 加载玩家名称
-        this.loadPlayerNames();
+        // 加载游戏列表
+        const games = JSON.parse(localStorage.getItem('games') || '[]');
+        this.ui.renderGamesList(games);
         
-        // 注册 Service Worker
-        this.registerServiceWorker();
+        // 加载赌注列表
+        const bets = JSON.parse(localStorage.getItem('bets') || '[]');
+        this.ui.renderBetsList(bets);
+        
+        // 更新统计数据
+        this.updateStats();
     }
 
     // 设置事件监听器
     setupEventListeners() {
-        // 导航事件
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const page = e.currentTarget.dataset.page;
-                this.changePage(page);
-            });
-        });
-
-        // 添加游戏按钮事件
-        document.getElementById('add-game-btn').addEventListener('click', () => {
-            this.ui.showModal('add-game-modal');
-        });
-
-        // 添加赌注按钮事件
-        document.getElementById('add-bet-btn').addEventListener('click', () => {
-            this.ui.showModal('add-bet-modal');
-        });
-
-        // 添加游戏表单提交事件
-        document.getElementById('add-game-form').addEventListener('submit', (e) => {
+        // 监听添加游戏表单提交
+        document.getElementById('add-game-form')?.addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleGameSubmit();
+            this.handleAddGame();
         });
 
-        // 添加赌注表单提交事件
-        document.getElementById('add-bet-form').addEventListener('submit', (e) => {
+        // 监听添加赌注表单提交
+        document.getElementById('add-bet-form')?.addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleBetSubmit();
+            this.handleAddBet();
         });
 
-        // 设置表单提交事件
-        document.getElementById('player1-name').addEventListener('change', () => this.savePlayerNames());
-        document.getElementById('player2-name').addEventListener('change', () => this.savePlayerNames());
-
-        // 数据管理按钮事件
-        document.getElementById('export-data').addEventListener('click', () => this.data.exportData());
-        document.getElementById('import-data').addEventListener('click', () => this.data.importData());
-        document.getElementById('clear-data').addEventListener('click', () => {
-            if (confirm('确定要清除所有数据吗？此操作不可恢复。')) {
-                this.data.clearData();
-                location.reload();
-            }
-        });
-
-        // 赌注类型切换事件
-        document.getElementById('bet-type').addEventListener('change', (e) => {
+        // 监听赌注类型变化
+        document.getElementById('bet-type')?.addEventListener('change', (e) => {
             this.ui.toggleBetConditions(e.target.value);
         });
 
-        // 关闭模态框按钮事件
-        document.querySelectorAll('.close-btn, .cancel-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.ui.hideAllModals();
-            });
+        // 监听游戏删除
+        document.getElementById('games-list')?.addEventListener('click', (e) => {
+            if (e.target.closest('.delete-game')) {
+                const gameItem = e.target.closest('.game-item');
+                if (gameItem) {
+                    this.handleDeleteGame(gameItem.dataset.id);
+                }
+            }
         });
+
+        // 监听赌注删除和完成
+        document.getElementById('bets-list')?.addEventListener('click', (e) => {
+            const betItem = e.target.closest('.bet-item');
+            if (!betItem) return;
+
+            if (e.target.closest('.delete-bet')) {
+                this.handleDeleteBet(betItem.dataset.id);
+            } else if (e.target.closest('.complete-bet')) {
+                this.handleCompleteBet(betItem.dataset.id);
+            }
+        });
+
+        // 监听玩家名称变化
+        document.getElementById('player1-name')?.addEventListener('change', () => this.handlePlayerNameChange());
+        document.getElementById('player2-name')?.addEventListener('change', () => this.handlePlayerNameChange());
+
+        // 监听数据管理按钮
+        document.getElementById('export-data')?.addEventListener('click', () => this.handleExportData());
+        document.getElementById('import-data')?.addEventListener('click', () => this.handleImportData());
+        document.getElementById('clear-data')?.addEventListener('click', () => this.handleClearData());
     }
 
-    // 切换页面
-    changePage(page) {
-        this.currentPage = page;
-        this.ui.showPage(page);
-        
-        // 更新页面内容
-        switch (page) {
-            case 'games':
-                this.ui.renderGamesList(this.data.getGames());
-                break;
-            case 'bets':
-                this.ui.renderBetsList(this.data.getBets());
-                break;
-            case 'stats':
-                this.updateStats();
-                break;
-            case 'settings':
-                this.loadSettings();
-                break;
+    // 处理添加游戏
+    handleAddGame() {
+        const gameSelect = document.getElementById('game-select');
+        const winnerInput = document.getElementById('winner-input');
+        const dateInput = document.getElementById('game-date');
+        const notesInput = document.getElementById('game-notes');
+        const betSelect = document.getElementById('bet-select');
+
+        if (!gameSelect.value || !winnerInput.value || !dateInput.value) {
+            alert('请填写必要信息');
+            return;
         }
-    }
 
-    // 处理游戏提交
-    handleGameSubmit() {
-        const form = document.getElementById('add-game-form');
-        const gameData = {
-            id: Date.now(),
-            gameName: form.querySelector('#game-select').value || form.querySelector('#new-game-input').value,
-            winner: form.querySelector('#winner-input').value,
-            date: form.querySelector('#game-date').value,
-            notes: form.querySelector('#game-notes').value,
-            betId: form.querySelector('#bet-select').value || null
+        const newGame = {
+            id: Date.now().toString(),
+            gameName: gameSelect.value,
+            winner: winnerInput.value,
+            date: dateInput.value,
+            notes: notesInput.value,
+            betId: betSelect.value
         };
 
-        // 保存游戏数据
-        this.data.addGame(gameData);
-        
-        // 更新相关赌注
-        if (gameData.betId) {
-            this.data.updateBetProgress(gameData.betId, gameData);
-        }
+        // 保存游戏记录
+        const games = JSON.parse(localStorage.getItem('games') || '[]');
+        games.push(newGame);
+        localStorage.setItem('games', JSON.stringify(games));
 
         // 更新UI
-        this.ui.renderGamesList(this.data.getGames());
+        this.ui.renderGamesList(games);
+        this.updateStats();
         this.ui.hideAllModals();
-        form.reset();
+
+        // 重置表单
+        document.getElementById('add-game-form').reset();
     }
 
-    // 处理赌注提交
-    handleBetSubmit() {
-        const form = document.getElementById('add-bet-form');
-        const betData = {
-            id: Date.now(),
-            type: form.querySelector('#bet-type').value,
-            content: form.querySelector('#bet-content').value,
-            status: 'active',
-            progress: 0,
-            conditions: {}
-        };
-
-        // 根据赌注类型设置条件
-        switch (betData.type) {
-            case 'single':
-                betData.conditions.gameId = form.querySelector('#game-for-bet').value || null;
-                break;
-            case 'series':
-                betData.conditions.targetWins = parseInt(form.querySelector('#series-count').value);
-                betData.conditions.currentWins = 0;
-                break;
-            case 'score':
-                betData.conditions.deadline = form.querySelector('#score-deadline').value;
-                break;
-        }
-
-        // 保存赌注数据
-        this.data.addBet(betData);
+    // 处理玩家名称变化
+    handlePlayerNameChange() {
+        const player1Name = document.getElementById('player1-name').value || '我';
+        const player2Name = document.getElementById('player2-name').value || '她';
+        document.getElementById('player-names').textContent = `玩家: ${player1Name} & ${player2Name}`;
         
-        // 更新UI
-        this.ui.renderBetsList(this.data.getBets());
-        this.ui.hideAllModals();
-        form.reset();
+        // 更新胜者选择按钮的显示名称
+        const playerBtns = document.querySelectorAll('.winner-selection .player-btn');
+        playerBtns[0].querySelector('.player-name').textContent = player1Name;
+        playerBtns[1].querySelector('.player-name').textContent = player2Name;
     }
 
     // 更新统计数据
     updateStats() {
-        const stats = this.data.calculateStats();
+        const stats = calculateStats();
         this.ui.renderStats(stats);
     }
 
-    // 加载设置
-    loadSettings() {
-        const settings = this.data.getSettings();
-        this.ui.renderSettings(settings);
-    }
-
-    // 加载玩家名称
-    loadPlayerNames() {
-        const names = this.data.getPlayerNames();
-        document.getElementById('player1-name').value = names.player1 || '';
-        document.getElementById('player2-name').value = names.player2 || '';
-        this.updatePlayerNamesDisplay(names);
-    }
-
-    // 保存玩家名称
-    savePlayerNames() {
-        const names = {
-            player1: document.getElementById('player1-name').value,
-            player2: document.getElementById('player2-name').value
+    // 处理导出数据
+    handleExportData() {
+        const data = {
+            games: JSON.parse(localStorage.getItem('games') || '[]'),
+            bets: JSON.parse(localStorage.getItem('bets') || '[]'),
+            settings: JSON.parse(localStorage.getItem('boardgame-tracker-settings') || '{"games":[]}')
         };
-        this.data.savePlayerNames(names);
-        this.updatePlayerNamesDisplay(names);
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `boardgame-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
-    // 更新玩家名称显示
-    updatePlayerNamesDisplay(names) {
-        const displayText = `玩家: ${names.player1 || '玩家1'} & ${names.player2 || '玩家2'}`;
-        document.getElementById('player-names').textContent = displayText;
-    }
-
-    // 注册 Service Worker
-    async registerServiceWorker() {
-        if ('serviceWorker' in navigator) {
-            try {
-                const registration = await navigator.serviceWorker.register('/BD/boardgame-tracker/service-worker.js');
-                console.log('Service Worker 注册成功:', registration);
-            } catch (error) {
-                console.log('Service Worker 注册失败:', error);
+    // 处理导入数据
+    handleImportData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        localStorage.setItem('games', JSON.stringify(data.games || []));
+                        localStorage.setItem('bets', JSON.stringify(data.bets || []));
+                        localStorage.setItem('boardgame-tracker-settings', JSON.stringify(data.settings || {"games":[]}));
+                        this.initializeApp();
+                        alert('数据导入成功！');
+                    } catch (error) {
+                        alert('导入失败：无效的数据格式');
+                    }
+                };
+                reader.readAsText(file);
             }
+        };
+        input.click();
+    }
+
+    // 处理清除数据
+    handleClearData() {
+        if (confirm('确定要清除所有数据吗？此操作不可恢复！')) {
+            localStorage.removeItem('games');
+            localStorage.removeItem('bets');
+            localStorage.removeItem('boardgame-tracker-settings');
+            this.initializeApp();
+            alert('所有数据已清除！');
         }
     }
 }
 
-// 当文档加载完成时初始化应用
+// 启动应用
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new BoardGameTracker();
+    window.app = new App();
 }); 
