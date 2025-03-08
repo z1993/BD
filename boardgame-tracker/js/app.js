@@ -207,7 +207,7 @@ class BoardGameTracker {
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
-                const registration = await navigator.serviceWorker.register('/service-worker.js');
+                const registration = await navigator.serviceWorker.register('/BD/boardgame-tracker/service-worker.js');
                 console.log('Service Worker 注册成功:', registration);
             } catch (error) {
                 console.log('Service Worker 注册失败:', error);
