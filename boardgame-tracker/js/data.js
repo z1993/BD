@@ -45,6 +45,11 @@ class DataManager {
 
     // 添加游戏
     addGame(gameData) {
+        // 验证必要字段
+        if (!gameData.gameName || !gameData.winner) {
+            throw new Error('游戏名称和胜者是必填项');
+        }
+
         this.games.push(gameData);
         
         // 如果是新游戏，添加到常用游戏列表
@@ -53,6 +58,7 @@ class DataManager {
         }
         
         this.saveData();
+        return gameData;
     }
 
     // 删除游戏
@@ -200,16 +206,29 @@ class DataManager {
             exportDate: new Date().toISOString()
         };
 
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        // 创建格式化的JSON字符串
+        const jsonString = JSON.stringify(data, null, 2);
+        
+        // 创建Blob
+        const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         
+        // 创建下载链接
         const a = document.createElement('a');
+        const date = new Date().toISOString().slice(0, 10);
         a.href = url;
-        a.download = `boardgame-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
+        a.download = `boardgame-tracker-backup-${date}.json`;
+        
+        // 添加到页面并触发下载
         document.body.appendChild(a);
         a.click();
+        
+        // 清理
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+
+        // 显示提示
+        alert('数据导出成功！文件名：' + a.download);
     }
 
     // 导入数据
@@ -226,6 +245,22 @@ class DataManager {
             reader.onload = (event) => {
                 try {
                     const data = JSON.parse(event.target.result);
+                    
+                    // 验证数据格式
+                    if (!data.games || !data.bets || !data.settings) {
+                        throw new Error('无效的数据格式');
+                    }
+
+                    // 备份当前数据
+                    const backup = {
+                        games: this.games,
+                        bets: this.bets,
+                        settings: this.settings,
+                        backupDate: new Date().toISOString()
+                    };
+                    localStorage.setItem('boardgame-tracker-backup', JSON.stringify(backup));
+
+                    // 导入新数据
                     this.games = data.games || [];
                     this.bets = data.bets || [];
                     this.settings = data.settings || {
@@ -233,6 +268,8 @@ class DataManager {
                         playerNames: { player1: '', player2: '' }
                     };
                     this.saveData();
+
+                    alert('数据导入成功！如果出现问题，可以使用之前的备份恢复。');
                     location.reload();
                 } catch (error) {
                     console.error('导入数据时出错:', error);

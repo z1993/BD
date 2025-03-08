@@ -4,6 +4,64 @@ class UI {
         this.modals = document.querySelectorAll('.modal');
         this.pages = document.querySelectorAll('.page');
         this.navButtons = document.querySelectorAll('.nav-btn');
+        this.setupEventListeners();
+    }
+
+    // 设置事件监听器
+    setupEventListeners() {
+        // 监听第一局按钮点击
+        document.getElementById('first-game-btn')?.addEventListener('click', () => {
+            this.showModal('add-game-modal');
+        });
+
+        // 监听胜者选择按钮
+        document.querySelectorAll('.winner-selection .player-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // 移除其他按钮的选中状态
+                document.querySelectorAll('.winner-selection .player-btn').forEach(b => {
+                    b.classList.remove('selected');
+                });
+                // 添加当前按钮的选中状态
+                e.currentTarget.classList.add('selected');
+                // 设置隐藏输入框的值
+                document.getElementById('winner-input').value = e.currentTarget.dataset.player;
+            });
+        });
+
+        // 监听新游戏添加按钮
+        document.getElementById('add-new-game-btn')?.addEventListener('click', () => {
+            const input = document.getElementById('new-game-input');
+            const select = document.getElementById('game-select');
+            if (input.value.trim()) {
+                // 创建新的选项
+                const option = document.createElement('option');
+                option.value = input.value.trim();
+                option.textContent = input.value.trim();
+                select.appendChild(option);
+                // 选中新添加的游戏
+                select.value = input.value.trim();
+                // 清空输入框
+                input.value = '';
+            }
+        });
+
+        // 监听设置页面的游戏添加按钮
+        document.getElementById('add-game-to-list')?.addEventListener('click', () => {
+            const input = document.getElementById('new-game-name');
+            if (input.value.trim()) {
+                const gamesList = document.getElementById('games-list-settings');
+                const gameItem = document.createElement('div');
+                gameItem.className = 'game-setting-item';
+                gameItem.innerHTML = `
+                    <span>${input.value.trim()}</span>
+                    <button class="icon-btn remove-game" data-game="${input.value.trim()}">
+                        <i class="bi bi-x"></i>
+                    </button>
+                `;
+                gamesList.appendChild(gameItem);
+                input.value = '';
+            }
+        });
     }
 
     // 初始化UI
@@ -12,6 +70,36 @@ class UI {
         const now = new Date();
         const dateTimeLocal = now.toISOString().slice(0, 16);
         document.getElementById('game-date').value = dateTimeLocal;
+
+        // 更新游戏选择列表
+        this.updateGameSelect();
+    }
+
+    // 更新游戏选择列表
+    updateGameSelect() {
+        const settings = JSON.parse(localStorage.getItem('boardgame-tracker-settings') || '{"games":[]}');
+        const gameSelect = document.getElementById('game-select');
+        const gameBetSelect = document.getElementById('game-for-bet');
+        
+        if (gameSelect) {
+            gameSelect.innerHTML = '<option value="">选择游戏</option>';
+            settings.games.forEach(game => {
+                const option = document.createElement('option');
+                option.value = game;
+                option.textContent = game;
+                gameSelect.appendChild(option);
+            });
+        }
+
+        if (gameBetSelect) {
+            gameBetSelect.innerHTML = '<option value="">选择游戏 (可选)</option>';
+            settings.games.forEach(game => {
+                const option = document.createElement('option');
+                option.value = game;
+                option.textContent = game;
+                gameBetSelect.appendChild(option);
+            });
+        }
     }
 
     // 显示指定页面
@@ -253,6 +341,21 @@ class UI {
                 `)
                 .join('');
             gamesList.innerHTML = gamesHtml;
+
+            // 添加删除游戏的事件监听
+            document.querySelectorAll('.remove-game').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const game = e.currentTarget.dataset.game;
+                    const gameItem = e.currentTarget.parentElement;
+                    gameItem.remove();
+                    // 更新设置
+                    const updatedGames = settings.games.filter(g => g !== game);
+                    settings.games = updatedGames;
+                    localStorage.setItem('boardgame-tracker-settings', JSON.stringify(settings));
+                    // 更新选择列表
+                    this.updateGameSelect();
+                });
+            });
         } else {
             gamesList.innerHTML = '<p>还没有添加常用游戏</p>';
         }
@@ -265,4 +368,79 @@ class UI {
             player2: document.getElementById('player2-name').value || '玩家2'
         };
     }
+}
+
+function renderStatistics() {
+    const stats = calculateStats();
+    const statsContainer = document.querySelector('.stats-container');
+    
+    statsContainer.innerHTML = `
+        <div class="stats-card">
+            <h3><i class="fas fa-trophy"></i> 总体战绩</h3>
+            <div class="player-stat">
+                <h4>玩家胜率</h4>
+                <div class="progress-bar">
+                    <div class="progress" style="width: ${stats.winRate}%"></div>
+                </div>
+                <p>
+                    <span class="result-icon win-icon">🏆</span> 胜利: ${stats.wins} 场
+                    <span class="result-icon lose-icon">💔</span> 失败: ${stats.losses} 场
+                </p>
+            </div>
+        </div>
+        
+        <div class="stats-card">
+            <h3><i class="fas fa-gamepad"></i> 游戏分布</h3>
+            ${renderGameDistribution(stats.gameDistribution)}
+        </div>
+        
+        <div class="stats-card">
+            <h3><i class="fas fa-shield-alt"></i> 数据安全</h3>
+            <div class="security-info">
+                <p><i class="fas fa-lock"></i> 所有数据仅存储在您的设备上</p>
+                <p><i class="fas fa-user-shield"></i> 其他用户无法访问您的数据</p>
+                <p><i class="fas fa-download"></i> 建议定期导出备份您的数据</p>
+            </div>
+        </div>
+    `;
+}
+
+function renderGameDistribution(distribution) {
+    if (!distribution || Object.keys(distribution).length === 0) {
+        return '<p class="text-center">暂无游戏记录</p>';
+    }
+    
+    return Object.entries(distribution)
+        .sort(([, a], [, b]) => b - a)
+        .map(([game, count]) => `
+            <div class="distribution-item">
+                <span class="game-name">🎲 ${game}</span>
+                <span class="game-count">${count} 场对局</span>
+            </div>
+        `).join('');
+}
+
+function calculateStats() {
+    const games = JSON.parse(localStorage.getItem('games') || '[]');
+    const stats = {
+        wins: 0,
+        losses: 0,
+        winRate: 0,
+        gameDistribution: {}
+    };
+    
+    games.forEach(game => {
+        if (game.winner === '玩家') {
+            stats.wins++;
+        } else {
+            stats.losses++;
+        }
+        
+        stats.gameDistribution[game.gameName] = (stats.gameDistribution[game.gameName] || 0) + 1;
+    });
+    
+    const totalGames = stats.wins + stats.losses;
+    stats.winRate = totalGames > 0 ? Math.round((stats.wins / totalGames) * 100) : 0;
+    
+    return stats;
 } 
